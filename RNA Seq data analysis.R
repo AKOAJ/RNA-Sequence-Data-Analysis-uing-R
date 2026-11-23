@@ -38,6 +38,7 @@ dev.off()
 #To determine the principal components of your data
 data <- plotPCA(rld, intgroup=c("virus"), returnData=T)
 percentVar <- round(100*attr(data,"percentVar")) #Round values for easier interpretation
+
 #Create plot
 png("PCAplot_NHBE.png", width = 22, height = 20, units = "cm", res = 500)
 ggplot(data, aes(PC1, PC2, shape=virus, color=virus)) +geom_point(size=3)+
@@ -60,6 +61,7 @@ dds <- DESeq(ddsMat)
 resultsNames(dds)
 resNHBE <- as.data.frame(results(dds, name = " virus_SARS_CoV_2_vs_mock"))
 resNHBE <- filter(resNHBE, padj < 0.05) # Filter for significantly expressed genes only.
+
 #Volcano plot to visualize the results of differential expression analysis.
 png("Volcano Plot_NHBE.png")
 EnhancedVolcano(resNHBE,
@@ -71,23 +73,28 @@ EnhancedVolcano(resNHBE,
                 title = "volcano plot of infected NHBE cells",
                 subtitle = "differentially expressed genes") + coord_flip()
 dev.off()
+
 #splitting the gene into up and down regulated ones.
 resNHBEUp <- rownames(filter(resNHBE, log2FoldChange > 0.5))
 resNHBEDown <- rownames(filter(resNHBE, log2FoldChange < -0.5))
+
 #determine overrepresented gene sets among the upregulated genes.
 gsea <- gost(resNHBEUp, organism = "hsapiens", sources = c("GO"), evcodes = T)
 gseaNHBEUp <- filter(gsea$result, term_size < 500, term_size > 10)
 write_xlsx(gseaNHBEUp, path = "gseaNHBEup.xlsx") #Save result in excel sheet
+
 #determine overrepresented gene sets among the downregulated genes.
 gsea <- gost(resNHBEDown, organism = "hsapiens", sources = c("GO"), evcodes = T)
 gseaNHBEDown <- filter(gsea$result, term_size < 500, term_size > 10)
 write_xlsx(gseaNHBEDown, path = "gseaNHBEdown.xlsx") #save result in excel sheet
+
 #display the 20 most significant, up-regulated GO terms.
 ggplot(gseaNHBEUp[1:20,], aes(x = reorder(term_name, -log10(p_value)),
                                 y = -log10(p_value))) +
   geom_bar(stat = "identity", fill = "orchid") + coord_flip() +
   xlab("GO terms") + ylab("-log10(p-Value)") + theme_minimal()
 ggsave("BarPlot_upregulated.png", width = 15, height = 20, units = "cm", dpi = 500)
+
 #display the 20 most significant, up-regulated GO terms.
 ggplot(gseaNHBEDown[1:20,], aes(x = reorder(term_name, -log10(p_value)),
                               y = -log10(p_value))) +
